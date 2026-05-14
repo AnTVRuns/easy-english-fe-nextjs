@@ -20,6 +20,13 @@ export const fetchAllCourseOfTeacher = async (
   return handleResponse(response, 200);
 };
 
+export const getAllCourseForAdmin = async (
+  courseRequest: CourseFilterRequest,
+): Promise<CoursePageResponse<CourseSummary> | null> => {
+  const response = await post(`${API_BASE}/admin/get`, courseRequest);
+  return handleResponse(response, 200);
+};
+
 export const getCourseByFilter = async (
   courseRequest: CourseFilterRequest,
 ): Promise<CoursePageResponse<CourseSummary> | null> => {
@@ -112,6 +119,7 @@ export default {
   fetchAllCourseOfTeacher,
   fetchAllCourses,
   fetchMainCourse,
+  getAllCourseForAdmin,
   getCourseByFilter,
   getCourseDetailButtonStatus,
   getEnrollCourse,

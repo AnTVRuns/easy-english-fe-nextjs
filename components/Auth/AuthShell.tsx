@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { Box, Center, Stack, Text } from '@chakra-ui/react';
 import type { ReactNode } from 'react';
 
 type AuthShellProps = {
@@ -15,33 +16,42 @@ export default function AuthShell({
   subtitle,
   children,
   footer,
-  maxWidthClassName = 'max-w-md',
 }: AuthShellProps) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white px-4 py-10">
-      <div className={`w-full ${maxWidthClassName} flex flex-col items-center gap-4`}>
+    <Center minH="100vh" bg="white" px={4} py={10}>
+      <Stack w="full" maxW="md" gap={4} align="center">
         <Link href="/" className="block">
           <Image
             src="/transient-app-logo.svg"
             alt="Logo"
             width={200}
             height={200}
-            className="h-auto w-50"
             priority
           />
         </Link>
 
-        <div className="text-center">
-          <h1 className="text-lg font-medium text-slate-800">{title}</h1>
-          {subtitle ? <div className="mt-2 text-sm text-slate-600">{subtitle}</div> : null}
-        </div>
+        <Stack gap={1} textAlign="center">
+          <Text fontSize="md" fontWeight="medium" color="gray.800">
+            {title}
+          </Text>
+          {subtitle ? <Box fontSize="sm" color="gray.600">{subtitle}</Box> : null}
+        </Stack>
 
-        <div className="w-full rounded-2xl border border-slate-200 bg-white p-8 shadow-[0_10px_40px_rgba(15,23,42,0.08)]">
+        <Box
+          w="full"
+          borderRadius="2xl"
+          borderWidth="1px"
+          borderColor="gray.200"
+          bg="white"
+          px={8}
+          py={8}
+          shadow="[0_10px_40px_rgba(15,23,42,0.08)]"
+        >
           {children}
-        </div>
+        </Box>
 
-        {footer ? <div className="text-center text-sm text-slate-600">{footer}</div> : null}
-      </div>
-    </div>
+        {footer ? <Text textAlign="center" fontSize="sm" color="gray.600">{footer}</Text> : null}
+      </Stack>
+    </Center>
   );
 }

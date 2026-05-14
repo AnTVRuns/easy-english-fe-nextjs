@@ -1,7 +1,11 @@
 import Link from 'next/link';
-import { Box, Button, Flex, Grid, Heading, Image, Stack, Text } from '@chakra-ui/react';
+import { Box, Button, Flex, Grid, Heading, Text } from '@chakra-ui/react';
 import courseService from '@/api/course';
 import type { CourseDetailResponse, CourseSummary } from '@/types/api/course';
+import CourseDetailPanel from '@/components/Courses/Detail/CourseDetailPanel';
+import CourseDetailSidebar from '@/components/Courses/Detail/CourseDetailSidebar';
+import CourseDetailTabLink from '@/components/Courses/Detail/CourseDetailTabLink';
+import RelatedCourseCard from '@/components/Courses/Detail/RelatedCourseCard';
 
 async function loadCourse(courseId: string): Promise<CourseDetailResponse | null> {
   try {
@@ -25,31 +29,16 @@ async function loadRelatedCourses(courseId: string): Promise<CourseSummary[]> {
   }
 }
 
-function RelatedCourseCard({ course }: { course: CourseSummary }) {
-  return (
-    <Link href={`/courses/${course.id}`} passHref legacyBehavior>
-      <Box borderWidth="1px" borderColor="gray.200" borderRadius="2xl" overflow="hidden" bg="white" shadow="sm">
-        <Box h="40" overflow="hidden">
-          <Image src={course.imagePreview || course.imageUrl || '/next.svg'} alt={course.title || 'Course'} w="100%" h="100%" objectFit="cover" />
-        </Box>
-        <Stack gap={2} p={4}>
-          <Text fontSize="sm" color="blue.600" fontWeight="semibold">
-            {course.topic?.name || 'English Course'}
-          </Text>
-          <Heading as="h3" size="sm" minH="2.75rem">
-            {course.title}
-          </Heading>
-          <Text fontSize="sm" color="gray.600">
-            {course.descriptionPreview || 'Related course'}
-          </Text>
-        </Stack>
-      </Box>
-    </Link>
-  );
-}
-
-export default async function CourseDetailPage({ params }: { params: Promise<{ courseId: string }> }) {
+export default async function CourseDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ courseId: string }>;
+  searchParams?: Promise<{ tab?: string }>;
+}) {
   const { courseId } = await params;
+  const resolvedSearchParams = (await searchParams) || {};
+  const activeTab = resolvedSearchParams.tab || 'description';
   const [course, relatedCourses] = await Promise.all([loadCourse(courseId), loadRelatedCourses(courseId)]);
 
   if (!course) {
@@ -71,18 +60,19 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
   return (
     <Box bg="gray.50" minH="100vh">
       <Box maxW="7xl" mx="auto" px={{ base: 4, md: 8 }} py={{ base: 10, md: 14 }}>
-        <Flex justify="space-between" align={{ base: 'start', lg: 'center' }} gap={6} flexDir={{ base: 'column', lg: 'row' }}>
-          <Stack gap={4} maxW="3xl">
+        <Flex gap={8} flexDir={{ base: 'column', lg: 'row' }} align="start">
+          <Box flex="1" minW={0}>
             <Text textTransform="uppercase" letterSpacing="0.2em" fontSize="sm" color="blue.600" fontWeight="bold">
               Course detail
             </Text>
-            <Heading as="h1" size="2xl">
+            <Heading as="h1" size="2xl" mt={2}>
               {course.title}
             </Heading>
-            <Text color="gray.600" fontSize="lg">
-              {course.descriptionPreview || course.description || 'Trang chi tiết khóa học tối thiểu để mở đầu migrate course-commerce flow.'}
+            <Text color="gray.600" fontSize="lg" mt={4} maxW="4xl">
+              {course.descriptionPreview || course.description || 'Trang chi tiết khóa học được migrate theo từng phần, ưu tiên đủ thông tin để người học quyết định xem tiếp hoặc bắt đầu học.'}
             </Text>
-            <Flex gap={4} flexWrap="wrap" color="gray.600">
+
+            <Flex gap={4} flexWrap="wrap" color="gray.600" mt={5}>
               <Text>{course.topic?.name || 'English'}</Text>
               <Text>•</Text>
               <Text>{course.level?.name || 'All levels'}</Text>
@@ -91,48 +81,49 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ c
               <Text>•</Text>
               <Text>{course.countSection ?? 0} lessons</Text>
             </Flex>
-          </Stack>
 
-          <Box w={{ base: 'full', lg: 'sm' }} bg="white" borderWidth="1px" borderColor="gray.200" borderRadius="3xl" overflow="hidden" shadow="md">
-            <Box h="64" overflow="hidden">
-              <Image src={course.imagePreview || course.imageUrl || '/next.svg'} alt={course.title || 'Course'} w="100%" h="100%" objectFit="cover" />
+            <Box mt={8} borderBottomWidth="1px" borderColor="gray.200" display="flex" gap={1} flexWrap="wrap">
+              <CourseDetailTabLink href={`/courses/${courseId}?tab=description`} active={activeTab === 'description'}>
+                Description
+              </CourseDetailTabLink>
+              <CourseDetailTabLink href={`/courses/${courseId}?tab=curriculum`} active={activeTab === 'curriculum'}>
+                Curriculum
+              </CourseDetailTabLink>
+              <CourseDetailTabLink href={`/courses/${courseId}?tab=faq`} active={activeTab === 'faq'}>
+                FAQ
+              </CourseDetailTabLink>
+              <CourseDetailTabLink href={`/courses/${courseId}?tab=announcement`} active={activeTab === 'announcement'}>
+                Announcement
+              </CourseDetailTabLink>
+              <CourseDetailTabLink href={`/courses/${courseId}?tab=reviews`} active={activeTab === 'reviews'}>
+                Reviews
+              </CourseDetailTabLink>
             </Box>
-            <Stack gap={4} p={6}>
-              <Text color="gray.500" fontSize="sm">
-                Instructor
-              </Text>
-              <Heading as="h2" size="md">
-                {course.owner?.fullName || 'Unknown instructor'}
+
+            <Box mt={6}>
+              <CourseDetailPanel course={course} activeTab={activeTab} />
+            </Box>
+
+            <Box mt={12}>
+              <Heading as="h2" size="lg" mb={6}>
+                Related courses
               </Heading>
-              <Box borderBottomWidth="1px" borderColor="gray.200" />
-              <Text color="gray.600">
-                Đây là khung migrate ban đầu, phần action enroll/cart/favourite sẽ được nối tiếp ở phase sau.
-              </Text>
-              <Link href="/courses">
-                <Button colorScheme="blue" size="lg" width="full">
-                  Back to courses
-                </Button>
-              </Link>
-            </Stack>
-          </Box>
-        </Flex>
-
-        <Box mt={12}>
-          <Heading as="h2" size="lg" mb={6}>
-            Related courses
-          </Heading>
-          {relatedCourses.length === 0 ? (
-            <Box borderWidth="1px" borderColor="gray.200" borderRadius="2xl" p={6} bg="white">
-              <Text color="gray.600">Related courses are not available yet.</Text>
+              {relatedCourses.length === 0 ? (
+                <Box borderWidth="1px" borderColor="gray.200" borderRadius="2xl" p={6} bg="white">
+                  <Text color="gray.600">Related courses are not available yet.</Text>
+                </Box>
+              ) : (
+                <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)', xl: 'repeat(4, 1fr)' }} gap={6}>
+                  {relatedCourses.map((relatedCourse) => (
+                    <RelatedCourseCard key={relatedCourse.id} course={relatedCourse} />
+                  ))}
+                </Grid>
+              )}
             </Box>
-          ) : (
-            <Grid templateColumns={{ base: '1fr', md: 'repeat(2, 1fr)', xl: 'repeat(4, 1fr)' }} gap={6}>
-              {relatedCourses.map((relatedCourse) => (
-                <RelatedCourseCard key={relatedCourse.id} course={relatedCourse} />
-              ))}
-            </Grid>
-          )}
-        </Box>
+          </Box>
+
+          <CourseDetailSidebar course={course} courseId={courseId} />
+        </Flex>
       </Box>
     </Box>
   );

@@ -1,13 +1,17 @@
 // Auth API Types
 export interface LoginPayload {
-  username?: string;
-  email?: string;
+  usernameOrEmail?: string;
   password: string;
+}
+
+export interface GoogleLoginPayload {
+  credential: string;
 }
 
 export interface LoginResponse {
   success: boolean;
   message: string;
+  accountStatus?: string;
   data?: {
     token: string;
     user: {
@@ -15,6 +19,9 @@ export interface LoginResponse {
       username: string;
       email: string;
       fullName: string;
+      role?: string;
+      accountStatus?: string;
+      [key: string]: unknown;
     };
   };
 }
@@ -47,12 +54,16 @@ export interface VerifyOtpPayload {
 export interface VerifyOtpResponse {
   success: boolean;
   message: string;
+  accountStatus?: string;
   data?: {
     token: string;
     user: {
       id: string;
       username: string;
       email: string;
+      role?: string;
+      accountStatus?: string;
+      [key: string]: unknown;
     };
   };
 }

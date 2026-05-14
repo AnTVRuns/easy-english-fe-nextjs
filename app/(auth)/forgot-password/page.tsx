@@ -1,13 +1,15 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
+import NextLink from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import type { Resolver } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { generateOtpForResetPassword } from '@/api/auth';
 import AuthShell from '@/components/Auth/AuthShell';
+import { Box, Button, Input, Stack, Text, Link as ChakraLink } from '@chakra-ui/react';
 
 const forgotPasswordSchema = yup.object({
   email: yup.string().email('Invalid email').required('Email is required'),
@@ -25,7 +27,7 @@ export default function ForgotPasswordPage() {
     handleSubmit,
     formState: { errors },
   } = useForm<ForgotPasswordFormInputs>({
-    resolver: yupResolver(forgotPasswordSchema),
+    resolver: yupResolver(forgotPasswordSchema) as unknown as Resolver<ForgotPasswordFormInputs>,
     mode: 'onBlur',
   });
 
@@ -55,53 +57,39 @@ export default function ForgotPasswordPage() {
       title="Forgot your password?"
       subtitle="Enter your email and we&apos;ll send you a code to reset your password"
       footer={
-        <div className="space-y-2">
-          <div>
-            <Link href="/login" className="text-cyan-500 hover:text-cyan-600">
-              Back to login
-            </Link>
-          </div>
-          <div>
-            <Link href="/register" className="text-cyan-500 hover:text-cyan-600">
-              Create new account
-            </Link>
-          </div>
-        </div>
+        <Stack spacing={2}>
+          <ChakraLink as={NextLink} href="/login" color="cyan.400">
+            Back to login
+          </ChakraLink>
+          <ChakraLink as={NextLink} href="/register" color="cyan.400">
+            Create new account
+          </ChakraLink>
+        </Stack>
       }
     >
-      <div className="space-y-6">
+      <Stack gap={6} align="stretch">
         {message ? (
-          <div
-            className={`rounded-xl px-4 py-3 text-sm ${
-              message.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
-            }`}
-          >
+          <Box borderRadius="xl" px={4} py={3} fontSize="sm" bg={message.type === 'success' ? 'emerald.50' : 'rose.50'} color={message.type === 'success' ? 'emerald.700' : 'rose.700'}>
             {message.text}
-          </div>
+          </Box>
         ) : null}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Email</label>
-            <input
-              {...register('email')}
-              type="email"
-              className={`w-full rounded-xl border px-4 py-3 outline-none transition focus:ring-2 focus:ring-cyan-500 ${
-                errors.email ? 'border-rose-500' : 'border-slate-300'
-              }`}
-            />
-            {errors.email ? <p className="mt-1 text-sm text-rose-600">{errors.email.message}</p> : null}
-          </div>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <Stack gap={5} align="stretch">
+            <Box>
+              <Text as="label" display="block" mb={2} fontSize="sm" fontWeight="medium" color="gray.700">
+                Email
+              </Text>
+              <Input {...register('email')} type="email" size="lg" borderRadius="xl" borderColor={errors.email ? 'red.500' : 'gray.300'} />
+              {errors.email ? <Text mt={1} fontSize="sm" color="red.600">{errors.email.message}</Text> : null}
+            </Box>
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full rounded-2xl bg-cyan-600 px-6 py-4 text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:bg-slate-400"
-          >
-            {isLoading ? 'Loading' : 'Reset Password'}
-          </button>
+            <Button type="submit" loading={isLoading} loadingText="Loading" width="full" size="lg" borderRadius="xl" bg="cyan.600" color="white" _hover={{ bg: 'cyan.700' }} _disabled={{ bg: 'gray.400', cursor: 'not-allowed' }}>
+              Reset Password
+            </Button>
+          </Stack>
         </form>
-      </div>
+      </Stack>
     </AuthShell>
   );
 }

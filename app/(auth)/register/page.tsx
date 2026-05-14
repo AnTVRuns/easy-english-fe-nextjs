@@ -1,14 +1,16 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
+import NextLink from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import type { Resolver } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { register as registerUser } from '@/api/auth';
 import AuthShell from '@/components/Auth/AuthShell';
 import type { RegisterPayload } from '@/types/api/auth';
+import { Box, Button, Input, Stack, Text, Flex, Link as ChakraLink } from '@chakra-ui/react';
 
 const registerSchema = yup.object({
   username: yup.string().min(3, 'Username must be at least 3 characters').required('Username is required'),
@@ -21,22 +23,10 @@ const registerSchema = yup.object({
   gender: yup.string().required('Gender is required'),
 });
 
-type RegisterFormInputs = {
-  username: string;
-  password: string;
-  confirmPassword: string;
-  fullName: string;
-  email: string;
-  phone: string | undefined;
-  dob: string;
-  gender: string;
-};
-
-type RegisterFormValues = yup.InferType<typeof registerSchema>;
+type RegisterFormInputs = yup.InferType<typeof registerSchema>;
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -44,12 +34,12 @@ export default function RegisterPage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<RegisterFormInputs, unknown, RegisterFormValues>({
-    resolver: yupResolver(registerSchema),
+  } = useForm<RegisterFormInputs>({
+    resolver: yupResolver(registerSchema) as unknown as Resolver<RegisterFormInputs>,
     mode: 'onBlur',
   });
 
-  const onSubmit = async (data: RegisterFormValues) => {
+  const onSubmit = async (data: RegisterFormInputs) => {
     setIsLoading(true);
     setMessage(null);
 
@@ -73,17 +63,12 @@ export default function RegisterPage() {
         setMessage({ type: 'error', text: response.message || 'Register unsuccessfully' });
       }
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Register unsuccessfully';
-      setMessage({ type: 'error', text: message });
+      const msg = error instanceof Error ? error.message : 'Register unsuccessfully';
+      setMessage({ type: 'error', text: msg });
     } finally {
       setIsLoading(false);
     }
   };
-
-  const fieldClass = (hasError?: boolean) =>
-    `w-full rounded-xl border px-4 py-3 outline-none transition focus:ring-2 focus:ring-cyan-500 ${
-      hasError ? 'border-rose-500' : 'border-slate-300'
-    }`;
 
   return (
     <AuthShell
@@ -91,107 +76,103 @@ export default function RegisterPage() {
       subtitle={
         <>
           Start making your dreams come true.{' '}
-          <Link href="/login" className="text-cyan-500 hover:text-cyan-600">
+          <ChakraLink as={NextLink} href="/login" color="cyan.400">
             Login
-          </Link>
+          </ChakraLink>
         </>
       }
-      maxWidthClassName="max-w-[420px]"
     >
-      <div className="space-y-6">
+      <Stack gap={6} align="stretch">
         {message ? (
-          <div
-            className={`rounded-xl px-4 py-3 text-sm ${
-              message.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'
-            }`}
-          >
+          <Box borderRadius="xl" px={4} py={3} fontSize="sm" bg={message.type === 'success' ? 'emerald.50' : 'rose.50'} color={message.type === 'success' ? 'emerald.700' : 'rose.700'}>
             {message.text}
-          </div>
+          </Box>
         ) : null}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Full name</label>
-            <input {...register('fullName')} className={fieldClass(!!errors.fullName)} />
-            {errors.fullName ? <p className="mt-1 text-sm text-rose-600">{errors.fullName.message}</p> : null}
-          </div>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <Stack gap={5} align="stretch">
+            <Box>
+              <Text as="label" display="block" mb={2} fontSize="sm" fontWeight="medium" color="gray.700">
+                Full name
+              </Text>
+              <Input {...register('fullName')} size="lg" borderRadius="xl" borderColor={errors.fullName ? 'red.500' : 'gray.300'} />
+              {errors.fullName ? <Text mt={1} fontSize="sm" color="red.600">{errors.fullName.message}</Text> : null}
+            </Box>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Username</label>
-            <input {...register('username')} className={fieldClass(!!errors.username)} />
-            {errors.username ? <p className="mt-1 text-sm text-rose-600">{errors.username.message}</p> : null}
-          </div>
+            <Box>
+              <Text as="label" display="block" mb={2} fontSize="sm" fontWeight="medium" color="gray.700">
+                Username
+              </Text>
+              <Input {...register('username')} size="lg" borderRadius="xl" borderColor={errors.username ? 'red.500' : 'gray.300'} />
+              {errors.username ? <Text mt={1} fontSize="sm" color="red.600">{errors.username.message}</Text> : null}
+            </Box>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Password</label>
-            <div className="relative">
-              <input
-                {...register('password')}
-                type={showPassword ? 'text' : 'password'}
-                className={`${fieldClass(!!errors.password)} pr-16`}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-cyan-700"
-              >
-                {showPassword ? 'Hide' : 'Show'}
-              </button>
-            </div>
-            {errors.password ? <p className="mt-1 text-sm text-rose-600">{errors.password.message}</p> : null}
-          </div>
+            <Box>
+              <Text as="label" display="block" mb={2} fontSize="sm" fontWeight="medium" color="gray.700">
+                Password
+              </Text>
+              <Input {...register('password')} type="password" size="lg" borderRadius="xl" borderColor={errors.password ? 'red.500' : 'gray.300'} />
+              {errors.password ? <Text mt={1} fontSize="sm" color="red.600">{errors.password.message}</Text> : null}
+            </Box>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Email</label>
-            <input {...register('email')} type="email" className={fieldClass(!!errors.email)} />
-            {errors.email ? <p className="mt-1 text-sm text-rose-600">{errors.email.message}</p> : null}
-          </div>
+            <Box>
+              <Text as="label" display="block" mb={2} fontSize="sm" fontWeight="medium" color="gray.700">
+                Confirm Password
+              </Text>
+              <Input {...register('confirmPassword')} type="password" size="lg" borderRadius="xl" borderColor={errors.confirmPassword ? 'red.500' : 'gray.300'} />
+              {errors.confirmPassword ? <Text mt={1} fontSize="sm" color="red.600">{errors.confirmPassword.message}</Text> : null}
+            </Box>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Phone number (Optional)</label>
-            <input {...register('phone')} className={fieldClass(!!errors.phone)} />
-          </div>
+            <Box>
+              <Text as="label" display="block" mb={2} fontSize="sm" fontWeight="medium" color="gray.700">
+                Email
+              </Text>
+              <Input {...register('email')} type="email" size="lg" borderRadius="xl" borderColor={errors.email ? 'red.500' : 'gray.300'} />
+              {errors.email ? <Text mt={1} fontSize="sm" color="red.600">{errors.email.message}</Text> : null}
+            </Box>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Date of birth</label>
-            <input {...register('dob')} type="date" className={fieldClass(!!errors.dob)} />
-            {errors.dob ? <p className="mt-1 text-sm text-rose-600">{errors.dob.message}</p> : null}
-          </div>
+            <Box>
+              <Text as="label" display="block" mb={2} fontSize="sm" fontWeight="medium" color="gray.700">
+                Phone number (Optional)
+              </Text>
+              <Input {...register('phone')} size="lg" borderRadius="xl" borderColor={errors.phone ? 'red.500' : 'gray.300'} />
+            </Box>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Gender</label>
-            <select {...register('gender')} className={fieldClass(!!errors.gender)} defaultValue="">
-              <option value="" disabled>
-                Select gender
-              </option>
-              <option value="MALE">Male</option>
-              <option value="FEMALE">Female</option>
-              <option value="OTHER">Other</option>
-            </select>
-            {errors.gender ? <p className="mt-1 text-sm text-rose-600">{errors.gender.message}</p> : null}
-          </div>
+            <Flex gap={4}>
+              <Box flex={1}>
+                <Text as="label" display="block" mb={2} fontSize="sm" fontWeight="medium" color="gray.700">
+                  Date of birth
+                </Text>
+                <Input {...register('dob')} type="date" size="lg" borderRadius="xl" borderColor={errors.dob ? 'red.500' : 'gray.300'} />
+                {errors.dob ? <Text mt={1} fontSize="sm" color="red.600">{errors.dob.message}</Text> : null}
+              </Box>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Confirm Password</label>
-            <input
-              {...register('confirmPassword')}
-              type="password"
-              className={fieldClass(!!errors.confirmPassword)}
-            />
-            {errors.confirmPassword ? (
-              <p className="mt-1 text-sm text-rose-600">{errors.confirmPassword.message}</p>
-            ) : null}
-          </div>
+              <Box width="40%">
+                <Text as="label" display="block" mb={2} fontSize="sm" fontWeight="medium" color="gray.700">
+                  Gender
+                </Text>
+                <Box
+                  as="select"
+                  {...register('gender')}
+                  borderRadius="xl"
+                  borderColor={errors.gender ? 'red.500' : 'gray.300'}
+                  height="3rem"
+                  px={3}
+                >
+                  <option value="MALE">Male</option>
+                  <option value="FEMALE">Female</option>
+                  <option value="OTHER">Other</option>
+                </Box>
+                {errors.gender ? <Text mt={1} fontSize="sm" color="red.600">{errors.gender.message}</Text> : null}
+              </Box>
+            </Flex>
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="mt-2 w-full rounded-2xl bg-cyan-600 px-6 py-4 text-white transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:bg-slate-400"
-          >
-            {isLoading ? 'Loading' : 'Register'}
-          </button>
+            <Button type="submit" loading={isLoading} loadingText="Loading" width="full" size="lg" borderRadius="xl" bg="cyan.600" color="white" _hover={{ bg: 'cyan.700' }} _disabled={{ bg: 'gray.400', cursor: 'not-allowed' }}>
+              Register
+            </Button>
+          </Stack>
         </form>
-      </div>
+      </Stack>
     </AuthShell>
   );
 }
