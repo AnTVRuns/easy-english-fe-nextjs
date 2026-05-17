@@ -72,7 +72,10 @@ export default function LoginPage() {
         console.debug('[login redirect]', { role, normalizedRole: normalizeRole(role), targetPath });
       }
 
-      router.replace(targetPath);
+      // Use push to perform a client-side navigation to the target route.
+      // `replace` sometimes doesn't trigger expected navigation in nested layouts;
+      // `push` is more explicit for redirecting after actions like login.
+      router.push(targetPath);
     },
     [router],
   );
